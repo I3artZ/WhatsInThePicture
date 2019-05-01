@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "732954060966",
+    "firebase_url": "https://my-project-18fb6.firebaseio.com",
+    "project_id": "my-project-18fb6",
+    "storage_bucket": "my-project-18fb6.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:732954060966:android:802cf901bf5c1c7a",
+        "android_client_info": {
+          "package_name": "com.bartz.whatsonpicture"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "732954060966-j3vs6s5m80gkmh0nm1ksm7bv7eqmassn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDRtkg402IUHFHoJhIyJ198LZheaLFr0FU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "732954060966-j3vs6s5m80gkmh0nm1ksm7bv7eqmassn.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
