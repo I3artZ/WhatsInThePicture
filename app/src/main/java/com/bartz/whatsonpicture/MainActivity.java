@@ -9,6 +9,7 @@ import android.graphics.Matrix;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
+import android.media.ExifInterface;
 import android.media.Image;
 import android.net.Uri;
 import android.os.Build;
@@ -58,7 +59,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         toolbar = findViewById(R.id.toolbar);
         imageView = findViewById(R.id.image_view);
-        textView = findViewById(R.id.textView);
+        textView = findViewById(R.id.text_view);
 
         setSupportActionBar(toolbar);
 
@@ -151,7 +152,35 @@ public class MainActivity extends AppCompatActivity {
         bmOptions.inPurgeable = true;
 
         Bitmap bitmap = BitmapFactory.decodeFile(currentPhotoPath, bmOptions);
-        bitmap = RotateBitmap(bitmap, 90);
+
+        int rotation = 90;
+        try {
+            ExifInterface ei = new ExifInterface(currentPhotoPath);
+            int orientation = ei.getAttributeInt(ExifInterface.TAG_ORIENTATION,
+                    ExifInterface.ORIENTATION_UNDEFINED);
+            switch(orientation) {
+
+                case ExifInterface.ORIENTATION_ROTATE_90:
+                    rotation = 90;
+                    break;
+
+                case ExifInterface.ORIENTATION_ROTATE_180:
+                    rotation = 180;
+                    break;
+
+                case ExifInterface.ORIENTATION_ROTATE_270:
+                    rotation = 270;
+                    break;
+
+                case ExifInterface.ORIENTATION_NORMAL:
+                default:
+                    rotation = 0;
+            }
+        } catch (IOException e) {
+            Log.wtf("getting orientation ", e);
+        }
+        //System.out.println("rotation " + rotation);
+        bitmap = RotateBitmap(bitmap, rotation);
         firebaseVisionImage = FirebaseVisionImage.fromBitmap(bitmap);
         imageView.setImageBitmap(bitmap);
 
@@ -178,8 +207,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onFailure(@NonNull Exception e) {
                         Log.wtf("labaler error", e);
-                        // Task failed with an exception
-                        // ...
+                        textView.setText("no matches for your picture!");
                     }
                 });
 
@@ -193,6 +221,16 @@ public class MainActivity extends AppCompatActivity {
         return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(),
                 matrix, true);
     }
+
+    private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
+    static {
+        ORIENTATIONS.append(Surface.ROTATION_0, 90);
+        ORIENTATIONS.append(Surface.ROTATION_90, 0);
+        ORIENTATIONS.append(Surface.ROTATION_180, 270);
+        ORIENTATIONS.append(Surface.ROTATION_270, 180);
+    }
+
+
 
 
 }
