@@ -8,29 +8,27 @@
     tools:context=".MainActivity"
     tools:showIn="@layout/activity_main">
 
+<RelativeLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
     <TextView
         android:id="@+id/textView"
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:minHeight="100dp"
+        android:layout_height="150dp"
         android:background="@color/colorAccent"
-        android:padding ="8dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:text="@tools:sample/last_names"/>
+        android:padding="8dp"
+        android:text="@string/welcome_msg"
+        android:textColor="@color/colorPrimaryDark"
+        android:textAlignment="center" />
 
     <ImageView
-        android:id="@+id/imageView"
-        android:layout_width="fill_parent"
-        android:layout_height="410dp"
-        android:layout_gravity="center_horizontal|center_vertical|fill_horizontal"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView"
-        app:layout_constraintBottom_toBottomOf="parent"
-        tools:srcCompat="@tools:sample/avatars" />
-
+        android:id="@+id/image_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/textView"
+        tools:srcCompat="@drawable/ic_launcher_background" />
+</RelativeLayout>
 
 </android.support.constraint.ConstraintLayout>
