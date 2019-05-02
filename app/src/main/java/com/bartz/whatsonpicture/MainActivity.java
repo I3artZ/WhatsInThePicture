@@ -1,18 +1,11 @@
 package com.bartz.whatsonpicture;
 
-import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
-import android.hardware.camera2.CameraAccessException;
-import android.hardware.camera2.CameraCharacteristics;
-import android.hardware.camera2.CameraManager;
 import android.media.ExifInterface;
-import android.media.Image;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -23,8 +16,6 @@ import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.util.SparseIntArray;
-import android.view.Surface;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -33,7 +24,6 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.ml.vision.FirebaseVision;
 import com.google.firebase.ml.vision.common.FirebaseVisionImage;
-import com.google.firebase.ml.vision.common.FirebaseVisionImageMetadata;
 import com.google.firebase.ml.vision.label.FirebaseVisionImageLabel;
 import com.google.firebase.ml.vision.label.FirebaseVisionImageLabeler;
 
@@ -42,8 +32,6 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
-
-import static android.webkit.ConsoleMessage.MessageLevel.LOG;
 
 public class MainActivity extends AppCompatActivity {
     static final int REQUEST_IMAGE_CAPTURE = 1;
@@ -144,7 +132,7 @@ public class MainActivity extends AppCompatActivity {
         int photoH = bmOptions.outHeight;
 
         // Determine how much to scale down the image
-        int scaleFactor = Math.min(photoW/targetW, photoH/targetH);
+        int scaleFactor = Math.min(photoW / targetW, photoH / targetH);
 
         // Decode the image file into a Bitmap sized to fill the View
         bmOptions.inJustDecodeBounds = false;
@@ -153,12 +141,67 @@ public class MainActivity extends AppCompatActivity {
 
         Bitmap bitmap = BitmapFactory.decodeFile(currentPhotoPath, bmOptions);
 
-        int rotation = 90;
+        //get rotation and rotate bitmap
+        float rotation = getPictureRotationFromCamera();
+        bitmap = rotateBitmap(bitmap, rotation);
+
+        //create image to analyze and populate imageView
+        firebaseVisionImage = FirebaseVisionImage.fromBitmap(bitmap);
+
+        //populate image_view with taken picture
+        imageView.setImageBitmap(bitmap);
+
+        //analyze picture and populate text_view with results
+        analyzePicture();
+
+    }
+
+
+    private void analyzePicture() {
+
+        //create labeler
+        FirebaseVisionImageLabeler labeler = FirebaseVision.getInstance()
+                .getOnDeviceImageLabeler();
+
+        //pass image to labeler and decide on action to be taken
+        labeler.processImage(firebaseVisionImage)
+                .addOnSuccessListener(new OnSuccessListener<List<FirebaseVisionImageLabel>>() {
+                    @Override
+                    public void onSuccess(List<FirebaseVisionImageLabel> labels) {
+                        StringBuilder result = new StringBuilder();
+
+                        for (FirebaseVisionImageLabel label : labels) {
+                            String text = label.getText();
+                            float confidence = label.getConfidence();
+                            result.append(text).append(" - ").append((int) Math.ceil(confidence * 100)).append("% | ");
+                        }
+                        textView.setText(result);
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.wtf("labaler error", e);
+                        textView.setText("no matches for your picture!");
+                    }
+                });
+    }
+
+    public static Bitmap rotateBitmap(Bitmap source, float angle) {
+        Matrix matrix = new Matrix();
+        matrix.postRotate(angle);
+        return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(),
+                matrix, true);
+    }
+
+    private float getPictureRotationFromCamera() {
+        int rotation;
         try {
             ExifInterface ei = new ExifInterface(currentPhotoPath);
             int orientation = ei.getAttributeInt(ExifInterface.TAG_ORIENTATION,
                     ExifInterface.ORIENTATION_UNDEFINED);
-            switch(orientation) {
+
+            switch (orientation) {
 
                 case ExifInterface.ORIENTATION_ROTATE_90:
                     rotation = 90;
@@ -176,61 +219,10 @@ public class MainActivity extends AppCompatActivity {
                 default:
                     rotation = 0;
             }
+            return rotation;
         } catch (IOException e) {
             Log.wtf("getting orientation ", e);
+            return 0;
         }
-        //System.out.println("rotation " + rotation);
-        bitmap = RotateBitmap(bitmap, rotation);
-        firebaseVisionImage = FirebaseVisionImage.fromBitmap(bitmap);
-        imageView.setImageBitmap(bitmap);
-
-        //create labeler
-        FirebaseVisionImageLabeler labeler = FirebaseVision.getInstance()
-                .getOnDeviceImageLabeler();
-
-        //pass image to labeler
-        labeler.processImage(firebaseVisionImage)
-                .addOnSuccessListener(new OnSuccessListener<List<FirebaseVisionImageLabel>>() {
-                    @Override
-                    public void onSuccess(List<FirebaseVisionImageLabel> labels) {
-                        StringBuilder result = new StringBuilder();
-                        for (FirebaseVisionImageLabel label: labels) {
-                            String text = label.getText();
-                            String entityId = label.getEntityId();
-                            float confidence = label.getConfidence();
-                            result.append(text).append(" - ").append((int)Math.ceil(confidence * 100)).append("% | ");
-                        }
-                        textView.setText(result);
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.wtf("labaler error", e);
-                        textView.setText("no matches for your picture!");
-                    }
-                });
-
     }
-
-
-    public static Bitmap RotateBitmap(Bitmap source, float angle)
-    {
-        Matrix matrix = new Matrix();
-        matrix.postRotate(angle);
-        return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(),
-                matrix, true);
-    }
-
-    private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
-    static {
-        ORIENTATIONS.append(Surface.ROTATION_0, 90);
-        ORIENTATIONS.append(Surface.ROTATION_90, 0);
-        ORIENTATIONS.append(Surface.ROTATION_180, 270);
-        ORIENTATIONS.append(Surface.ROTATION_270, 180);
-    }
-
-
-
-
 }
