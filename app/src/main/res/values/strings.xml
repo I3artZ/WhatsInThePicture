@@ -1,5 +1,5 @@
 <resources>
     <string name="app_name">What\'s on Picture?</string>
-    <string name="title_activity_main">MainActivity</string>
+    <string name="title_activity_main">What\'s on Picture?</string>
     <string name="welcome_msg">Take a photo or choose one from gallery</string>
 </resources>
