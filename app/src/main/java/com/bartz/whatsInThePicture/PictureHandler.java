@@ -1,4 +1,4 @@
-package com.bartz.whatsonpicture;
+package com.bartz.whatsInThePicture;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
